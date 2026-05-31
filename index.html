@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+
+    .app-card {
+      width: 340px;
+      height: 440px;
+      background: #18181c;
+      border: 1px solid #2d2d34;
+      border-radius: 16px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .title-bar {
+      height: 44px;
+      background: #111115;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid #232329;
+      cursor: move;
+      -webkit-app-region: drag;
+    }
+
+    .title-text {
+      color: #9ca3af;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .control-buttons {
+      display: flex;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      transition: color 0.2s;
+    }
+    .icon-btn:hover { color: #10b981; }
+
+    .win-btn {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+
+    .win-btn.minimize { background: #f59e0b; }
+    .win-btn.close { background: #ef4444; }
+
+    .content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      box-sizing: border-box;
+      transition: opacity 0.3s;
+    }
+
+    .brand-section { text-align: center; }
+
+    .app-logo {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    }
+
+    .app-title { font-size: 16px; font-weight: 800; color: #f3f4f6; margin: 0; }
+    .app-desc { font-size: 10px; color: #9ca3af; margin: 4px 0 0; line-height: 1.4; }
+
+    .action-group { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+
+    .btn {
+      width: 100%; padding: 12px; border-radius: 10px; border: none; font-size: 11px;
+      font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 8px; transition: all 0.15s ease; box-sizing: border-box;
+    }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-folder { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35); }
+    .btn-srt { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35); }
+
+    .instruction-box {
+      width: 100%; background: #27272a; border: 1px solid #3f3f46; border-radius: 8px;
+      padding: 10px; font-size: 9px; color: #a1a1aa; text-align: left; box-sizing: border-box;
+    }
+
+    .status-bar {
+      width: 100%; background: #111115; padding: 10px 14px; border-top: 1px solid #232329;
+      display: flex; align-items: center; gap: 8px; font-size: 10px; color: #9ca3af; box-sizing: border-box;
+    }
+
+    .status-dot {
+      width: 6px; height: 6px; background: #ef4444; border-radius: 50%;
+    }
+    .status-dot.active {
+      background: #10b981; animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+    .settings-panel {
+      position: absolute; top: 44px; left: 0; width: 100%; height: calc(100% - 44px);
+      background: #18181c; z-index: 10; padding: 20px; box-sizing: border-box;
+      transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; flex-direction: column;
+    }
+    .settings-panel.open { transform: translateX(0); }
+    
+    .settings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .settings-title { font-size: 14px; font-weight: 800; color: #f3f4f6; }
+    
+    .setting-group { margin-bottom: 15px; }
+    .setting-label { display: block; font-size: 10px; color: #9ca3af; margin-bottom: 5px; font-weight: 600; }
+    
+    .shortcut-input {
+      width: 100%; background: #111115; border: 1px solid #3f3f46; color: #10b981;
+      padding: 10px; border-radius: 6px; font-size: 11px; font-weight: bold; font-family: monospace;
+      outline: none; text-align: center; box-sizing: border-box; cursor: text;
+    }
+    .shortcut-input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+    .shortcut-input::placeholder { color: #52525b; font-weight: normal; }
+
+    .save-btn {
+      margin-top: auto; padding: 12px; background: #3b82f6; color: white;
+      border: none; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;
+    }
+    .save-btn:hover { background: #2563eb; }
+    
+    .key-badge { color: #10b981; font-weight: bold; padding: 0 2px; }
+
+  </style>
+</head>
+<body>
+
+  <div class="app-card">
+    <div class="title-bar">
+      <span class="title-text">CapCut Tool v7.1</span>
+      <div class="control-buttons">
+        <button class="icon-btn" id="btn-settings" title="Cài đặt Phím tắt">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+        <button class="win-btn minimize" onclick="minimizeApp()" title="Thu nhỏ"></button>
+        <!-- THAY ĐỔI Ở ĐÂY: onclick="hideApp()" thay vì quitApp() -->
+        <button class="win-btn close" onclick="hideApp()" title="Ẩn xuống khay hệ thống (Chạy ngầm)"></button>
+      </div>
+    </div>
+
+    <div class="content" id="main-view">
+      <div class="action-group">
+        <div class="instruction-box" style="padding: 10px; background: #1f1f22; border-color: #8b5cf6;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #3f3f46; padding-bottom: 6px; margin-bottom: 6px;">
+            <h3 style="color:#d4d4d8; font-size: 10px; margin: 0;">🚀 MACRO PHÍM TẮT NGẦM</h3>
+          </div>
+          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-ui" class="key-badge">F2</span>]: Ẩn / Hiện bảng điều khiển này.</p>
+          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-undo" class="key-badge">F3</span>]: Hoàn tác (Undo) trả về như cũ.</p>
+          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-macro" class="key-badge">F4</span>]: Tự động Bôi đen & Gom Clip.</p>
+          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-srt" class="key-badge">F5</span>]: Trích xuất & Lưu phụ đề SRT.</p>
+          <p style="margin: 0; line-height: 1.4;">• [<span id="lbl-cut" class="key-badge">F6</span>]: Mở & Lưu Video MP4.</p>
+        </div>
+
+        <div class="instruction-box" style="padding: 10px;">
+          <h3 style="color:#d4d4d8; font-size: 10px; margin: 0 0 6px 0; border-bottom: 1px solid #3f3f46; padding-bottom: 6px;">SAU KHI BẤM GOM CLIP:</h3>
+          <p style="margin: 0; line-height: 1.4;">Bật <b>Motion Blur</b>, chỉnh Blur về <b>0%</b> và đợi nó chạy Processing 100% xong. Rồi bấm Phím tắt hoặc nút dưới:</p>
+        </div>
+
+        <button class="btn btn-folder" onclick="cutCacheFolder()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Mở & Lưu Video
+        </button>
+
+        <button class="btn btn-srt" onclick="exportSrt()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Trích xuất & Lưu phụ đề SRT
+        </button>
+      </div>
+    </div>
+
+    <div class="settings-panel" id="settings-view">
+      <div class="settings-header">
+        <span class="settings-title">CÀI ĐẶT PHÍM TẮT</span>
+        <button class="icon-btn" id="btn-close-settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; padding-right: 4px;">
+        <div class="setting-group">
+          <label class="setting-label">Phím Ẩn / Hiện Giao Diện</label>
+          <input type="text" class="shortcut-input" id="inp-ui" placeholder="Nhấn phím...">
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Phím Hoàn Tác (Undo)</label>
+          <input type="text" class="shortcut-input" id="inp-undo" placeholder="Nhấn phím...">
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Phím Tự động Gom Clip</label>
+          <input type="text" class="shortcut-input" id="inp-macro" placeholder="Nhấn phím...">
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Phím Xuất Phụ Đề SRT</label>
+          <input type="text" class="shortcut-input" id="inp-srt" placeholder="Nhấn phím...">
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Phím Cắt Video MP4</label>
+          <input type="text" class="shortcut-input" id="inp-cut" placeholder="Nhấn phím...">
+        </div>
+      </div>
+
+      <button class="save-btn" id="btn-save-settings">LƯU CÀI ĐẶT</button>
+    </div>
+
+    <div class="status-bar">
+      <span class="status-dot" id="status-indicator"></span>
+      <span id="status-label">Khởi động...</span>
+    </div>
+  </div>
+
+  <script>
+    let ipcRenderer;
+    if (typeof require !== 'undefined') {
+      ipcRenderer = require('electron').ipcRenderer;
+    } else {
+      console.warn("Đang chạy trên môi trường Web/Preview. Đã giả lập (mock) ipcRenderer.");
+      ipcRenderer = {
+        send: (channel, data) => console.log('Giả lập gửi lệnh:', channel, data),
+        on: (channel, cb) => console.log('Giả lập nhận lệnh:', channel)
+      };
+    }
+
+    const statusLabel = document.getElementById('status-label');
+    const statusIndicator = document.getElementById('status-indicator');
+
+    // DOM Elements
+    const settingsView = document.getElementById('settings-view');
+    const btnSettings = document.getElementById('btn-settings');
+    const btnCloseSettings = document.getElementById('btn-close-settings');
+    const btnSaveSettings = document.getElementById('btn-save-settings');
+
+    let currentConfig = {};
+
+    let isDragging = false;
+    let startX, startY;
+    window.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.win-btn') || e.target.closest('.btn') || e.target.closest('.icon-btn') || e.target.closest('.shortcut-input')) return;
+      isDragging = true;
+      startX = e.screenX; startY = e.screenY;
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      ipcRenderer.send('window-move', { deltaX: e.screenX - startX, deltaY: e.screenY - startY });
+      startX = e.screenX; startY = e.screenY;
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+    // HÀM MỚI: Ẩn xuống System Tray thay vì Tắt hẳn
+    function hideApp() { ipcRenderer.send('app-hide'); }
+    function minimizeApp() { ipcRenderer.send('app-minimize'); }
+    
+    function cutCacheFolder() { ipcRenderer.send('cut-cache-video'); }
+    function exportSrt() { ipcRenderer.send('get-latest-srt'); }
+
+    btnSettings.onclick = () => settingsView.classList.add('open');
+    btnCloseSettings.onclick = () => settingsView.classList.remove('open');
+
+    ipcRenderer.on('load-config', (event, config) => {
+      currentConfig = config;
+      document.getElementById('lbl-ui').innerText = config.toggleUI || 'Chưa gán';
+      document.getElementById('lbl-undo').innerText = config.undo || 'Chưa gán';
+      document.getElementById('lbl-macro').innerText = config.macro || 'Chưa gán';
+      document.getElementById('lbl-srt').innerText = config.srt || 'Chưa gán';
+      document.getElementById('lbl-cut').innerText = config.cut || 'Chưa gán';
+
+      document.getElementById('inp-ui').value = config.toggleUI;
+      document.getElementById('inp-undo').value = config.undo;
+      document.getElementById('inp-macro').value = config.macro;
+      document.getElementById('inp-srt').value = config.srt;
+      document.getElementById('inp-cut').value = config.cut;
+    });
+
+    const inputs = document.querySelectorAll('.shortcut-input');
+    inputs.forEach(input => {
+      input.addEventListener('keydown', (e) => {
+        e.preventDefault();
+        let keys = [];
+        if (e.ctrlKey) keys.push('CommandOrControl');
+        if (e.altKey) keys.push('Alt');
+        if (e.shiftKey) keys.push('Shift');
+        
+        let k = e.key;
+        if (['Control', 'Alt', 'Shift', 'Meta', 'Tab', 'Escape'].includes(k)) return;
+        
+        if (/^[a-z]$/.test(k)) k = k.toUpperCase();
+        if (k.startsWith('Arrow')) k = k.replace('Arrow', '');
+        if (k === ' ') k = 'Space';
+        
+        keys.push(k);
+        e.target.value = keys.join('+');
+      });
+    });
+
+    btnSaveSettings.onclick = () => {
+      const newConfig = {
+        toggleUI: document.getElementById('inp-ui').value,
+        undo: document.getElementById('inp-undo').value,
+        macro: document.getElementById('inp-macro').value,
+        srt: document.getElementById('inp-srt').value,
+        cut: document.getElementById('inp-cut').value
+      };
+      ipcRenderer.send('save-config', newConfig);
+      
+      document.getElementById('lbl-ui').innerText = newConfig.toggleUI;
+      document.getElementById('lbl-undo').innerText = newConfig.undo;
+      document.getElementById('lbl-macro').innerText = newConfig.macro;
+      document.getElementById('lbl-srt').innerText = newConfig.srt;
+      document.getElementById('lbl-cut').innerText = newConfig.cut;
+
+      settingsView.classList.remove('open');
+    };
+
+    ipcRenderer.on('capcut-status', (event, isRunning) => {
+      if (isRunning) {
+        statusIndicator.className = 'status-dot active';
+        statusLabel.innerText = 'CapCut đang mở! Đã bật phím ngầm.';
+      } else {
+        statusIndicator.className = 'status-dot';
+        statusLabel.innerText = 'Chờ CapCut... Phím ngầm đã tắt.';
+      }
+    });
+
+    ipcRenderer.on('macro-status', (event, message) => {
+      statusLabel.innerText = message;
+    });
+  </script>
+</body>
+</html>

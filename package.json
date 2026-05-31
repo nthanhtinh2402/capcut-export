@@ -1,0 +1,13 @@
+{
+  "name": "capcut-pro-bypass-standalone",
+  "version": "3.0.0",
+  "main": "main.js",
+  "description": "Ung dung doc lap mo khoa Pro de xuat video mien phi tu CapCut",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "dependencies": {
+    "electron": "^28.2.0"
+  }
+}
