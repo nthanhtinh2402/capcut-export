@@ -1,396 +1,490 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      user-select: none;
+const { app, BrowserWindow, ipcMain, shell, globalShortcut, dialog, Tray, Menu, nativeImage } = require('electron');
+const path = require('path');
+const fs = require('fs');
+const { exec } = require('child_process'); // Chỉ giữ lại exec để chạy VBScript
+
+// 1. TẠO ICON ỨNG DỤNG MẶC ĐỊNH
+const iconPath = path.join(__dirname, 'icon.png');
+if (!fs.existsSync(iconPath)) {
+  const iconBase64 = "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";
+  fs.writeFileSync(iconPath, Buffer.from(iconBase64, 'base64'));
+}
+
+// 2. BIẾN TOÀN CỤC & CẤU HÌNH
+let mainWindow;
+let tray = null;
+let isQuiting = false;
+let isHotkeysActive = false; // Công tắc (Mặc định tắt để tránh kẹt phím)
+
+const CONFIG_PATH = path.join(app.getPath('userData'), 'shortcuts_v2.json');
+const DEFAULT_CONFIG = {
+  toggleUI: 'F2',       // Ẩn hiện giao diện
+  toggleHotkeys: 'F8',  // Bật/tắt cụm phím làm việc
+  undo: 'F3',
+  macro: 'F4',
+  srt: 'F5',
+  cut: 'F6',
+  cachePath: '',
+  draftsPath: '' 
+};
+let currentConfig = { ...DEFAULT_CONFIG };
+
+function loadConfig() {
+  try {
+    if (fs.existsSync(CONFIG_PATH)) {
+      const data = fs.readFileSync(CONFIG_PATH, 'utf-8');
+      const parsed = JSON.parse(data);
+      for (const key in parsed) {
+        if (parsed[key] && typeof parsed[key] === 'string' && parsed[key].trim() !== '') {
+          currentConfig[key] = parsed[key];
+        }
+      }
     }
+  } catch (e) {}
+}
 
-    /* CHẾ ĐỘ SONG NGỮ */
-    body.lang-vn .en { display: none !important; }
-    body.lang-en .vn { display: none !important; }
+function saveConfig(config) {
+  currentConfig = { ...currentConfig, ...config };
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(currentConfig, null, 2));
+  applyHotkeysLogic();
+}
 
-    .app-card {
-      width: 340px;
-      height: 100vh; /* Tự động ôm khít 100% chiều cao của cửa sổ Electron */
-      background: #18181c;
-      border: 1px solid #2d2d34;
-      border-radius: 16px;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.6);
-      display: flex;
-      flex-direction: column;
-      box-sizing: border-box;
-      overflow: hidden;
-      position: relative;
+// 3. KHỞI TẠO CỬA SỔ
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 340,
+    height: 350,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
     }
+  });
+  mainWindow.loadFile('index.html');
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.send('load-config', currentConfig);
+  });
+  mainWindow.on('close', function (event) {
+    if (!isQuiting) { event.preventDefault(); mainWindow.hide(); }
+    return false;
+  });
+}
 
-    .title-bar {
-      height: 44px;
-      background: #111115;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 14px;
-      border-bottom: 1px solid #232329;
-      cursor: move;
-      -webkit-app-region: drag;
-    }
+function createTray() {
+  if (tray) {
+    tray.destroy(); // Hủy biểu tượng cũ nếu tạo lại
+  }
+  tray = new Tray(nativeImage.createFromPath(iconPath));
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Hiện Giao Diện Công Cụ', click: () => mainWindow.show() },
+    { type: 'separator' },
+    { label: `⚙️ Đổi Phím Bật/Tắt (Đang dùng: ${currentConfig.toggleHotkeys})`, click: () => showHotkeySettings() },
+    { type: 'separator' },
+    { label: 'Thoát Hoàn Toàn', click: () => { isQuiting = true; app.quit(); }}
+  ]);
+  tray.setToolTip('CapCut Export Tool');
+  tray.setContextMenu(contextMenu);
+  tray.on('click', () => { mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show(); });
+}
 
-    .title-text {
-      color: #9ca3af;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
+// IPC Events
+ipcMain.on('app-hide', () => { if (mainWindow) mainWindow.hide(); });
+ipcMain.on('app-minimize', () => { if (mainWindow) mainWindow.minimize(); });
+ipcMain.on('save-config', (event, config) => { saveConfig(config); });
 
-    .control-buttons {
-      display: flex;
-      gap: 8px;
-      -webkit-app-region: no-drag;
-      align-items: center;
-    }
-
-    .icon-btn {
-      background: transparent;
-      border: none;
-      color: #9ca3af;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2px;
-      transition: color 0.2s;
-    }
-    .icon-btn:hover { color: #10b981; }
-
-    .win-btn {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .win-btn.minimize { background: #f59e0b; }
-    .win-btn.close { background: #ef4444; }
-
-    .content {
-      flex: 1;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      box-sizing: border-box;
-      transition: opacity 0.3s;
-    }
-
-    .brand-section { text-align: center; }
-    .app-title { font-size: 16px; font-weight: 800; color: #f3f4f6; margin: 0; }
-    .app-desc { font-size: 10px; color: #9ca3af; margin: 4px 0 0; line-height: 1.4; }
-
-    .action-group { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-
-    /* Xóa bỏ định dạng các nút .btn, .btn-folder, .btn-srt vì không còn dùng đến */
-
-    .instruction-box {
-      width: 100%; background: #27272a; border: 1px solid #3f3f46; border-radius: 8px;
-      padding: 10px; font-size: 9px; color: #a1a1aa; text-align: left; box-sizing: border-box;
-    }
-
-    .status-bar {
-      width: 100%; background: #111115; padding: 10px 14px; border-top: 1px solid #232329;
-      display: flex; align-items: center; gap: 8px; font-size: 10px; color: #9ca3af; box-sizing: border-box;
-    }
-
-    .status-dot {
-      width: 6px; height: 6px; background: #ef4444; border-radius: 50%;
-    }
-    .status-dot.active {
-      background: #10b981; animation: blink 1.5s infinite;
-    }
-
-    @keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-
-    .settings-panel {
-      position: absolute; top: 44px; left: 0; width: 100%; height: calc(100% - 44px);
-      background: #18181c; z-index: 10; padding: 20px; box-sizing: border-box;
-      transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex; flex-direction: column;
-    }
-    .settings-panel.open { transform: translateX(0); }
-    
-    .settings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-    .settings-title { font-size: 14px; font-weight: 800; color: #f3f4f6; }
-    
-    .setting-group { margin-bottom: 15px; }
-    .setting-label { display: block; font-size: 10px; color: #9ca3af; margin-bottom: 5px; font-weight: 600; }
-    
-    .shortcut-input {
-      width: 100%; background: #111115; border: 1px solid #3f3f46; color: #10b981;
-      padding: 10px; border-radius: 6px; font-size: 11px; font-weight: bold; font-family: monospace;
-      outline: none; text-align: center; box-sizing: border-box; cursor: text;
-    }
-    .shortcut-input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
-    .shortcut-input::placeholder { color: #52525b; font-weight: normal; }
-
-    .save-btn {
-      margin-top: auto; padding: 12px; background: #3b82f6; color: white;
-      border: none; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;
-    }
-    .save-btn:hover { background: #2563eb; }
-    
-    .key-badge { color: #10b981; font-weight: bold; padding: 0 2px; }
-
-  </style>
-</head>
-<body class="lang-vn">
-
-  <div class="app-card">
-    <div class="title-bar">
-      <span class="title-text">CapCut Tool v8.0</span>
-      <div class="control-buttons">
-        <!-- Nút chuyển ngôn ngữ -->
-        <button class="icon-btn" id="btn-lang" title="Thay đổi Ngôn ngữ / Change Language" onclick="toggleLang()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="2" y1="12" x2="22" y2="12"></line>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-          </svg>
-        </button>
-        <!-- Nút mở cài đặt -->
-        <button class="icon-btn" id="btn-settings" title="Cài đặt Phím tắt / Shortcut Settings">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        </button>
-        <button class="win-btn minimize" onclick="minimizeApp()"></button>
-        <button class="win-btn close" onclick="hideApp()"></button>
-      </div>
-    </div>
-
-    <div class="content" id="main-view">
-      <div class="action-group">
-        <div class="instruction-box" style="padding: 10px; background: #1f1f22; border-color: #8b5cf6;">
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #3f3f46; padding-bottom: 6px; margin-bottom: 6px;">
-            <h3 style="color:#d4d4d8; font-size: 10px; margin: 0;">
-              <span class="vn">🚀 MACRO PHÍM TẮT NGẦM</span>
-              <span class="en">🚀 BACKGROUND MACRO HOTKEYS</span>
-            </h3>
-          </div>
-          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-ui" class="key-badge">F2</span>]: 
-            <span class="vn">Ẩn / Hiện bảng điều khiển này.</span><span class="en">Show / Hide this control panel.</span>
-          </p>
-          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-undo" class="key-badge">F3</span>]: 
-            <span class="vn">Hoàn tác (Undo) trả về như cũ.</span><span class="en">Undo changes (Revert).</span>
-          </p>
-          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-macro" class="key-badge">F4</span>]: 
-            <span class="vn">Tự động Bôi đen & Gom Clip.</span><span class="en">Auto Select All & Compound Clip.</span>
-          </p>
-          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-srt" class="key-badge">F5</span>]: 
-            <span class="vn">Trích xuất & Lưu phụ đề SRT.</span><span class="en">Extract & Save SRT Subtitles.</span>
-          </p>
-          <p style="margin: 0; line-height: 1.4; color: #10b981; font-weight: bold;">• [<span id="lbl-cut" class="key-badge" style="color: #fff; background: #10b981; border-radius: 4px;">F6</span>]: 
-            <span class="vn">Xuất Video.</span><span class="en">Export Video.</span>
-          </p>
-        </div>
-
-        <div class="instruction-box" style="padding: 10px;">
-          <h3 style="color:#d4d4d8; font-size: 10px; margin: 0 0 6px 0; border-bottom: 1px solid #3f3f46; padding-bottom: 6px;">
-            <span class="vn">SAU KHI BẤM GOM CLIP:</span>
-            <span class="en">AFTER COMPOUNDING:</span>
-          </h3>
-          <p style="margin: 0; line-height: 1.4;">
-            <span class="vn">Bật <b>Motion Blur</b>, chỉnh Blur về <b>0%</b> và đợi nó chạy Processing 100% xong. Rồi bấm Phím tắt.</span>
-            <span class="en">Enable <b>Motion Blur</b>, set Blur to <b>0%</b> and wait for Processing 100%. Then press Hotkeys.</span>
-          </p>
-        </div>
-
-        <!-- Đã xóa hoàn toàn 2 nút .btn-folder (XUẤT VIDEO) và .btn-srt (XUẤT PHỤ ĐỀ) -->
-
-      </div>
-    </div>
-
-    <div class="settings-panel" id="settings-view">
-      <div class="settings-header">
-        <span class="settings-title">
-          <span class="vn">CÀI ĐẶT PHÍM TẮT</span><span class="en">HOTKEY SETTINGS</span>
-        </span>
-        <button class="icon-btn" id="btn-close-settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-
-      <div style="flex: 1; overflow-y: auto; padding-right: 4px;">
-        <div class="setting-group">
-          <label class="setting-label"><span class="vn">Phím Ẩn / Hiện Giao Diện</span><span class="en">Toggle UI Panel Key</span></label>
-          <input type="text" class="shortcut-input" id="inp-ui" placeholder="Nhấn phím / Press key...">
-        </div>
-        <div class="setting-group">
-          <label class="setting-label"><span class="vn">Phím Hoàn Tác (Undo)</span><span class="en">Undo Action Key</span></label>
-          <input type="text" class="shortcut-input" id="inp-undo" placeholder="Nhấn phím / Press key...">
-        </div>
-        <div class="setting-group">
-          <label class="setting-label"><span class="vn">Phím Tự động Gom Clip</span><span class="en">Auto Compound Clip Key</span></label>
-          <input type="text" class="shortcut-input" id="inp-macro" placeholder="Nhấn phím / Press key...">
-        </div>
-        <div class="setting-group">
-          <label class="setting-label"><span class="vn">Phím Xuất Phụ Đề SRT</span><span class="en">Export SRT Key</span></label>
-          <input type="text" class="shortcut-input" id="inp-srt" placeholder="Nhấn phím / Press key...">
-        </div>
-        <div class="setting-group">
-          <label class="setting-label"><span class="vn">Phím Xuất Video</span><span class="en">Export Video Key</span></label>
-          <input type="text" class="shortcut-input" id="inp-cut" placeholder="Nhấn phím / Press key...">
-        </div>
-      </div>
-
-      <button class="save-btn" id="btn-save-settings">
-        <span class="vn">LƯU CÀI ĐẶT</span><span class="en">SAVE SETTINGS</span>
-      </button>
-    </div>
-
-    <div class="status-bar">
-      <span class="status-dot" id="status-indicator"></span>
-      <span id="status-label">
-        <span class="vn">Khởi động...</span><span class="en">Starting...</span>
-      </span>
-    </div>
-  </div>
-
-  <script>
-    let ipcRenderer;
-    if (typeof require !== 'undefined') {
-      ipcRenderer = require('electron').ipcRenderer;
-    } else {
-      console.warn("Môi trường Web. Đã giả lập ipcRenderer.");
-      ipcRenderer = { send: () => {}, on: () => {} };
-    }
-
-    // Cơ chế chuyển đổi ngôn ngữ
-    let currentLang = 'vn';
-    function toggleLang() {
-      currentLang = currentLang === 'vn' ? 'en' : 'vn';
-      document.body.className = 'lang-' + currentLang;
-    }
-
-    const statusLabel = document.getElementById('status-label');
-    const statusIndicator = document.getElementById('status-indicator');
-
-    const settingsView = document.getElementById('settings-view');
-    const btnSettings = document.getElementById('btn-settings');
-    const btnCloseSettings = document.getElementById('btn-close-settings');
-    const btnSaveSettings = document.getElementById('btn-save-settings');
-
-    let currentConfig = {};
-    let isDragging = false;
-    let startX, startY;
-
-    window.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.win-btn') || e.target.closest('.btn') || e.target.closest('.icon-btn') || e.target.closest('.shortcut-input')) return;
-      isDragging = true;
-      startX = e.screenX; startY = e.screenY;
-    });
-    window.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      ipcRenderer.send('window-move', { deltaX: e.screenX - startX, deltaY: e.screenY - startY });
-      startX = e.screenX; startY = e.screenY;
-    });
-    window.addEventListener('mouseup', () => { isDragging = false; });
-
-    function hideApp() { ipcRenderer.send('app-hide'); }
-    function minimizeApp() { ipcRenderer.send('app-minimize'); }
-    function cutCacheFolder() { ipcRenderer.send('cut-cache-video'); }
-    function exportSrt() { ipcRenderer.send('get-latest-srt'); }
-
-    btnSettings.onclick = () => settingsView.classList.add('open');
-    btnCloseSettings.onclick = () => settingsView.classList.remove('open');
-
-    ipcRenderer.on('load-config', (event, config) => {
-      currentConfig = config;
-      document.getElementById('lbl-ui').innerText = config.toggleUI || 'Chưa gán';
-      document.getElementById('lbl-undo').innerText = config.undo || 'Chưa gán';
-      document.getElementById('lbl-macro').innerText = config.macro || 'Chưa gán';
-      document.getElementById('lbl-srt').innerText = config.srt || 'Chưa gán';
-      document.getElementById('lbl-cut').innerText = config.cut || 'Chưa gán';
-
-      document.getElementById('inp-ui').value = config.toggleUI;
-      document.getElementById('inp-undo').value = config.undo;
-      document.getElementById('inp-macro').value = config.macro;
-      document.getElementById('inp-srt').value = config.srt;
-      document.getElementById('inp-cut').value = config.cut;
-    });
-
-    const inputs = document.querySelectorAll('.shortcut-input');
-    inputs.forEach(input => {
-      input.addEventListener('keydown', (e) => {
-        e.preventDefault();
-        let keys = [];
-        if (e.ctrlKey) keys.push('CommandOrControl');
-        if (e.altKey) keys.push('Alt');
-        if (e.shiftKey) keys.push('Shift');
+// ==========================================================================
+// TÍNH NĂNG MỚI: ĐỔI PHÍM TẮT TRỰC TIẾP TRÊN GIAO DIỆN
+// ==========================================================================
+function showHotkeySettings() {
+    if (mainWindow) {
+        if (!mainWindow.isVisible()) mainWindow.show();
+        mainWindow.focus();
         
-        let k = e.key;
-        if (['Control', 'Alt', 'Shift', 'Meta', 'Tab', 'Escape'].includes(k)) return;
-        if (/^[a-z]$/.test(k)) k = k.toUpperCase();
-        if (k.startsWith('Arrow')) k = k.replace('Arrow', '');
-        if (k === ' ') k = 'Space';
+        // Bơm mã HTML/JS vào thẳng cửa sổ chính để hiển thị bảng nhập phím
+        mainWindow.webContents.executeJavaScript(`
+            (function() {
+                let overlay = document.getElementById('hotkey-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'hotkey-overlay';
+                    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(24, 24, 28, 0.95); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-family:sans-serif; backdrop-filter: blur(5px);';
+                    overlay.innerHTML = '<h3 style="margin-bottom:10px; color:#10b981; font-weight:800; font-size:16px;">ĐỔI PHÍM BẬT/TẮT</h3><p style="font-size:12px; color:#a1a1aa; text-align:center; padding:0 20px;">Hãy nhấn một phím bất kỳ trên bàn phím<br>(VD: F8, F9, Insert...)</p><button id="btn-cancel-hotkey" style="margin-top:25px; padding:8px 25px; background:#ef4444; font-weight:bold; border:none; border-radius:8px; color:white; cursor:pointer">Hủy Bỏ</button>';
+                    document.body.appendChild(overlay);
+                    
+                    const cancelBtn = document.getElementById('btn-cancel-hotkey');
+                    
+                    const listener = (e) => {
+                        e.preventDefault();
+                        let key = e.key;
+                        
+                        // Bỏ qua nếu người dùng chỉ ấn các phím phụ
+                        if (['Control', 'Shift', 'Alt', 'Meta'].includes(key)) return;
+                        
+                        // Định dạng lại các phím đặc biệt
+                        if (key.length === 1) key = key.toUpperCase();
+                        if (key.startsWith('Arrow')) key = key.replace('Arrow', '');
+                        
+                        // Gửi phím vừa nhận được về cho máy chủ Node.js
+                        const { ipcRenderer } = require('electron');
+                        ipcRenderer.send('save-toggle-hotkey', key);
+                        
+                        cleanup();
+                    };
+                    
+                    const cleanup = () => {
+                        window.removeEventListener('keydown', listener);
+                        if(document.body.contains(overlay)) document.body.removeChild(overlay);
+                    };
+                    
+                    cancelBtn.onclick = cleanup;
+                    window.addEventListener('keydown', listener);
+                }
+            })();
+        `).catch(err => console.log(err));
+    }
+}
+
+// Nhận phím mới và lưu lại
+ipcMain.on('save-toggle-hotkey', (event, newKey) => {
+    if (newKey && newKey.trim() !== '') {
+        saveConfig({ toggleHotkeys: newKey });
+        createTray(); // Cập nhật lại chữ "Đang dùng: XXX" trên khay hệ thống
         
-        keys.push(k);
-        e.target.value = keys.join('+');
-      });
+        if (isHotkeysActive) {
+            updateUIStatus(`ĐÃ BẬT PHÍM TẮT (Bấm ${newKey} để khóa)`, '#10b981');
+        } else {
+            updateUIStatus(`ĐÃ KHÓA PHÍM TẮT (Bấm ${newKey} để bật)`, '#f59e0b');
+        }
+    }
+});
+
+function runVbsScript(vbsCode) {
+  const tempVbsPath = path.join(app.getPath('temp'), 'cc_macro.vbs');
+  try {
+    fs.writeFileSync(tempVbsPath, vbsCode, 'utf-8');
+    exec(`cscript.exe //NoLogo "${tempVbsPath}"`, { windowsHide: true });
+  } catch (e) {}
+}
+
+// ==========================================================================
+// ĐỌC DATABASE GỐC VÀ DÒ TÌM CACHE
+// ==========================================================================
+function getProjectFromMasterDatabase() {
+  const defaultDraftsDir = path.join(process.env.USERPROFILE, 'AppData', 'Local', 'CapCut', 'User Data', 'Projects', 'com.lveditor.draft');
+  if (!fs.existsSync(defaultDraftsDir)) return null;
+  
+  try {
+    const files = fs.readdirSync(defaultDraftsDir);
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        const filePath = path.join(defaultDraftsDir, file);
+        const content = fs.readFileSync(filePath, 'utf-8');
+        if (content.includes('"all_draft_store"')) {
+          const data = JSON.parse(content);
+          if (data.all_draft_store && Array.isArray(data.all_draft_store)) {
+            data.all_draft_store.sort((a, b) => b.tm_draft_modified - a.tm_draft_modified);
+            for (const proj of data.all_draft_store) {
+               if (proj.draft_json_file && fs.existsSync(proj.draft_json_file)) {
+                   return {
+                       contentPath: proj.draft_json_file,
+                       folderName: proj.draft_name || path.basename(proj.draft_fold_path),
+                       mtime: proj.tm_draft_modified,
+                       rootPath: proj.draft_root_path
+                   };
+               }
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function autoDetectCachePath() {
+  const active = getProjectFromMasterDatabase();
+  if (active && active.rootPath) {
+     const capcutBase = path.join(active.rootPath, '..');
+     const cache1 = path.join(capcutBase, 'Cache', 'MotionBlurCache');
+     const cache2 = path.join(capcutBase, 'CapCut Cache', 'MotionBlurCache');
+     const cache3 = path.join(capcutBase, '..', 'Cache', 'MotionBlurCache');
+     if (fs.existsSync(cache1)) return cache1;
+     if (fs.existsSync(cache2)) return cache2;
+     if (fs.existsSync(cache3)) return cache3;
+  }
+  const defaultCache = path.join(process.env.USERPROFILE, 'AppData', 'Local', 'CapCut', 'User Data', 'Cache', 'MotionBlurCache');
+  if (fs.existsSync(defaultCache)) return defaultCache;
+  return null;
+}
+
+function getActiveProjectInfo() {
+  const masterProject = getProjectFromMasterDatabase();
+  if (masterProject) return masterProject;
+  
+  if (mainWindow) mainWindow.setAlwaysOnTop(false);
+  dialog.showMessageBoxSync(mainWindow, { 
+    type: 'error', title: 'Lỗi Database', message: 'Không thể đọc được dữ liệu dự án từ CapCut!' 
+  });
+  if (mainWindow) mainWindow.setAlwaysOnTop(true);
+  return null;
+}
+
+// ==========================================================================
+// TRÍCH XUẤT PHỤ ĐỀ (SRT) & XUẤT VIDEO (MP4)
+// ==========================================================================
+function usToSrtTime(us) {
+  const totalMs = Math.round(us / 1000);
+  const ms = totalMs % 1000;
+  const totalSeconds = Math.floor(totalMs / 1000);
+  const s = totalSeconds % 60;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const m = totalMinutes % 60;
+  const h = Math.floor(totalMinutes / 60);
+  const pad = (num, size) => num.toString().padStart(size, '0');
+  return `${pad(h, 2)}:${pad(m, 2)}:${pad(s, 2)},${pad(ms, 3)}`;
+}
+
+function extractSrtLogic() {
+  const active = getActiveProjectInfo();
+  if (!active) return;
+  const projectName = active.folderName;
+  
+  try {
+    const draftContent = JSON.parse(fs.readFileSync(active.contentPath, 'utf-8'));
+    const textMap = new Map();
+    const textsList = draftContent.materials?.texts || [];
+    
+    textsList.forEach(item => {
+      let actual = item.recognize_text || "";
+      if (!actual && item.content) {
+        try { actual = JSON.parse(item.content).text || ""; } catch (err) { actual = item.content; }
+      }
+      actual = actual.replace(/<[^>]*>?/gm, '').trim(); 
+      textMap.set(item.id, actual);
     });
-
-    btnSaveSettings.onclick = () => {
-      const newConfig = {
-        toggleUI: document.getElementById('inp-ui').value,
-        undo: document.getElementById('inp-undo').value,
-        macro: document.getElementById('inp-macro').value,
-        srt: document.getElementById('inp-srt').value,
-        cut: document.getElementById('inp-cut').value
-      };
-      ipcRenderer.send('save-config', newConfig);
-      
-      document.getElementById('lbl-ui').innerText = newConfig.toggleUI;
-      document.getElementById('lbl-undo').innerText = newConfig.undo;
-      document.getElementById('lbl-macro').innerText = newConfig.macro;
-      document.getElementById('lbl-srt').innerText = newConfig.srt;
-      document.getElementById('lbl-cut').innerText = newConfig.cut;
-      settingsView.classList.remove('open');
-    };
-
-    // Bộ phiên dịch thông báo từ hệ thống
-    const translateMsg = {
-      'Đã Undo (Hoàn tác).': 'Undo successful.',
-      'Đã bôi đen và gộp Clip xong!': 'Clips selected & compounded!',
-      '❌ Không có phụ đề nào để xuất!': '❌ No subtitles to export!',
-      '✅ Đã lưu file SRT thành công!': '✅ SRT file saved successfully!',
-      '❌ Thư mục Cache chưa tồn tại. (Quên bật Motion Blur?)': '❌ Cache not found. (Forgot Motion Blur?)',
-      '❌ Không có video nào được Render ngầm!': '❌ No background rendered video found!',
-      '✅ Đã CUT video và dọn rác Cache thành công!': '✅ Video Exported & Cache cleaned successfully!'
-    };
-
-    ipcRenderer.on('capcut-status', (event, isRunning) => {
-      if (isRunning) {
-        statusIndicator.className = 'status-dot active';
-        statusLabel.innerHTML = '<span class="vn">CapCut đang mở! Đã kích hoạt phím ngầm.</span><span class="en">CapCut is open! Hotkeys active.</span>';
-      } else {
-        statusIndicator.className = 'status-dot';
-        statusLabel.innerHTML = '<span class="vn">Chờ CapCut... Phím ngầm đã tắt.</span><span class="en">Waiting for CapCut... Hotkeys disabled.</span>';
+    
+    const textTracks = (draftContent.tracks || []).filter(t => t.type === 'text');
+    const segments = [];
+    
+    textTracks.forEach(track => {
+      if (track.segments) {
+        track.segments.forEach(seg => {
+          const text = textMap.get(seg.material_id);
+          if (text && seg.target_timerange) {
+            segments.push({ start: seg.target_timerange.start, duration: seg.target_timerange.duration, text: text });
+          }
+        });
       }
     });
-
-    ipcRenderer.on('macro-status', (event, message) => {
-      const enMsg = translateMsg[message] || message;
-      statusLabel.innerHTML = `<span class="vn">${message}</span><span class="en">${enMsg}</span>`;
+    
+    if (segments.length === 0) {
+      dialog.showMessageBox(mainWindow, { type: 'warning', title: 'Trống Phụ đề', message: 'Dự án này không có bất kỳ dòng phụ đề hoặc chữ nào để xuất!' });
+      return;
+    }
+    
+    segments.sort((a, b) => a.start - b.start);
+    let srtContent = '';
+    segments.forEach((sub, i) => {
+      srtContent += `${i + 1}\n${usToSrtTime(sub.start)} --> ${usToSrtTime(sub.start + sub.duration)}\n${sub.text}\n\n`;
     });
-  </script>
-</body>
-</html>
+    
+    const safeName = projectName.replace(/[/\\?%*:|"<>\s]/g, '_') + '.srt';
+    dialog.showSaveDialog(mainWindow, {
+      title: 'Lưu File SRT Phụ đề',
+      defaultPath: path.join(app.getPath('desktop'), safeName),
+      filters: [{ name: 'SubRip Text', extensions: ['srt'] }]
+    }).then(result => {
+      if (!result.canceled) {
+        fs.writeFileSync(result.filePath, srtContent, 'utf-8');
+        shell.showItemInFolder(result.filePath);
+      }
+    });
+  } catch(e) {}
+}
+
+function cutCacheLogic() {
+  const active = getActiveProjectInfo();
+  if (!active) return;
+  const projectName = active.folderName;
+  let CACHE_PATH = autoDetectCachePath();
+  
+  if (!CACHE_PATH || !fs.existsSync(CACHE_PATH)) {
+    if (mainWindow) mainWindow.setAlwaysOnTop(false);
+    const result = dialog.showOpenDialogSync(mainWindow, {
+      title: 'CHỌN THƯ MỤC MOTION BLUR CACHE CỦA CAPCUT',
+      properties: ['openDirectory']
+    });
+    if (mainWindow) mainWindow.setAlwaysOnTop(true);
+    if (result && result.length > 0) {
+      CACHE_PATH = result[0];
+      saveConfig({ cachePath: CACHE_PATH }); 
+    } else { return; }
+  }
+  
+  const files = fs.readdirSync(CACHE_PATH);
+  const mp4Files = [];
+  const alphaFiles = [];
+  files.forEach(f => {
+    const filePath = path.join(CACHE_PATH, f);
+    const stat = fs.statSync(filePath);
+    if (!stat.isDirectory()) {
+      if (f.endsWith('.mp4.alpha')) alphaFiles.push(filePath);
+      else if (f.endsWith('.mp4')) mp4Files.push({ path: filePath, mtime: stat.mtimeMs });
+    }
+  });
+  
+  if (mp4Files.length === 0) {
+    dialog.showMessageBox(mainWindow, { type: 'warning', title: 'Thư mục Cache Trống', message: 'Không tìm thấy file Video MP4 nào!\nHãy đảm bảo bạn đã tích bật Motion Blur 1%.' });
+    return;
+  }
+  
+  mp4Files.sort((a, b) => b.mtime - a.mtime);
+  const targetMp4 = mp4Files[0].path;
+  const safeName = projectName.replace(/[/\\?%*:|"<>\s]/g, '_') + '.mp4';
+  
+  dialog.showSaveDialog(mainWindow, {
+    title: 'Cắt và Lưu Video MP4',
+    defaultPath: path.join(app.getPath('desktop'), safeName),
+    filters: [{ name: 'MP4 Video', extensions: ['mp4'] }]
+  }).then(result => {
+    if (!result.canceled) {
+      fs.copyFileSync(targetMp4, result.filePath);
+      try { fs.unlinkSync(targetMp4); } catch(e) {}
+      alphaFiles.forEach(alphaPath => { try { fs.unlinkSync(alphaPath); } catch(e) {} });
+      shell.showItemInFolder(result.filePath);
+    }
+  });
+}
+
+// ==========================================================================
+// HỆ THỐNG QUẢN LÝ PHÍM TẮT (THỦ CÔNG)
+// ==========================================================================
+function registerGlobalHotkeys() {
+  // 1. Phím Ẩn/Hiện giao diện (Luôn hoạt động)
+  if (currentConfig.toggleUI) {
+    try {
+      globalShortcut.register(currentConfig.toggleUI, () => {
+        if (mainWindow) mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+      });
+    } catch(e) {}
+  }
+
+  // 2. Phím Công Tắc Bật/Tắt (Luôn hoạt động)
+  if (currentConfig.toggleHotkeys) {
+    try {
+      globalShortcut.register(currentConfig.toggleHotkeys, () => {
+        isHotkeysActive = !isHotkeysActive;
+        
+        if (isHotkeysActive) {
+          registerCapcutHotkeys();
+          updateUIStatus(`ĐÃ BẬT PHÍM TẮT (Bấm ${currentConfig.toggleHotkeys} để khóa)`, '#10b981');
+        } else {
+          unregisterCapcutHotkeys();
+          updateUIStatus(`ĐÃ KHÓA PHÍM TẮT (Bấm ${currentConfig.toggleHotkeys} để bật)`, '#f59e0b');
+        }
+      });
+    } catch(e) {}
+  }
+}
+
+// Hàm chỉ đăng ký cụm phím tính năng
+function registerCapcutHotkeys() {
+  if (currentConfig.undo) {
+    try { globalShortcut.register(currentConfig.undo, () => { runVbsScript(`Set WshShell = WScript.CreateObject("WScript.Shell")\nWshShell.SendKeys "^z"`); }); } catch(e) {}
+  }
+  if (currentConfig.macro) {
+    try { globalShortcut.register(currentConfig.macro, () => { runVbsScript(`Set WshShell = WScript.CreateObject("WScript.Shell")\nWScript.Sleep 50\nWshShell.SendKeys "^a"\nWScript.Sleep 300\nWshShell.SendKeys "%g"`); }); } catch(e) {}
+  }
+  if (currentConfig.srt) {
+    try { globalShortcut.register(currentConfig.srt, extractSrtLogic); } catch(e) {}
+  }
+  if (currentConfig.cut) {
+    try { globalShortcut.register(currentConfig.cut, cutCacheLogic); } catch(e) {}
+  }
+}
+
+function unregisterCapcutHotkeys() {
+  if (currentConfig.undo) globalShortcut.unregister(currentConfig.undo);
+  if (currentConfig.macro) globalShortcut.unregister(currentConfig.macro);
+  if (currentConfig.srt) globalShortcut.unregister(currentConfig.srt);
+  if (currentConfig.cut) globalShortcut.unregister(currentConfig.cut);
+}
+
+function applyHotkeysLogic() {
+  globalShortcut.unregisterAll();
+  registerGlobalHotkeys(); // Đăng ký lại F2, phím Tắt/Bật
+  
+  if (isHotkeysActive) {
+    registerCapcutHotkeys(); // Nếu công tắc đang bật thì kích hoạt luôn
+  }
+}
+
+function updateUIStatus(text, color) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.executeJavaScript(`
+            var lbl = document.getElementById('status-label');
+            if (lbl) {
+                lbl.innerText = '${text}';
+                lbl.style.color = '${color}';
+            }
+            var dot = document.querySelector('.status-dot');
+            if (dot) {
+                dot.style.backgroundColor = '${color}';
+                if(color === '#10b981') {
+                    dot.style.animation = 'none';
+                    dot.style.boxShadow = '0 0 8px #10b981';
+                } else if(color === '#ef4444') {
+                    dot.style.animation = 'none';
+                    dot.style.boxShadow = '0 0 8px #ef4444';
+                } else {
+                    dot.style.animation = 'blink 1.5s infinite';
+                    dot.style.boxShadow = 'none';
+                }
+            }
+        `).catch(()=>{});
+    }
+}
+
+// ==========================================================================
+// APP LIFECYCLE 
+// ==========================================================================
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    if (mainWindow) {
+      if (!mainWindow.isVisible()) mainWindow.show();
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+
+  app.whenReady().then(() => {
+    loadConfig();
+    createWindow();
+    try { createTray(); } catch(e) {}
+    
+    applyHotkeysLogic();
+    
+    // Mặc định khởi động ứng dụng sẽ khóa phím tắt (để tránh vô tình bấm lúc dùng web)
+    setTimeout(() => {
+      updateUIStatus(`ĐÃ KHÓA PHÍM TẮT (Bấm ${currentConfig.toggleHotkeys} để bật)`, '#f59e0b');
+    }, 1500);
+  });
+
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+  });
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin' && isQuiting) {
+      app.quit();
+    }
+  });
+}
