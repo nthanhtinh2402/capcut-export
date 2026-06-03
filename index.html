@@ -12,9 +12,13 @@
       user-select: none;
     }
 
+    /* CHẾ ĐỘ SONG NGỮ */
+    body.lang-vn .en { display: none !important; }
+    body.lang-en .vn { display: none !important; }
+
     .app-card {
       width: 340px;
-      height: 440px;
+      height: 100vh; /* Tự động ôm khít 100% chiều cao của cửa sổ Electron */
       background: #18181c;
       border: 1px solid #2d2d34;
       border-radius: 16px;
@@ -72,6 +76,9 @@
       border-radius: 50%;
       border: none;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .win-btn.minimize { background: #f59e0b; }
@@ -89,33 +96,12 @@
     }
 
     .brand-section { text-align: center; }
-
-    .app-logo {
-      width: 50px;
-      height: 50px;
-      background: linear-gradient(135deg, #10b981, #059669);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 10px;
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-    }
-
     .app-title { font-size: 16px; font-weight: 800; color: #f3f4f6; margin: 0; }
     .app-desc { font-size: 10px; color: #9ca3af; margin: 4px 0 0; line-height: 1.4; }
 
     .action-group { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 
-    .btn {
-      width: 100%; padding: 12px; border-radius: 10px; border: none; font-size: 11px;
-      font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      gap: 8px; transition: all 0.15s ease; box-sizing: border-box;
-    }
-    .btn:active { transform: scale(0.98); }
-
-    .btn-folder { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35); }
-    .btn-srt { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35); }
+    /* Xóa bỏ định dạng các nút .btn, .btn-folder, .btn-srt vì không còn dùng đến */
 
     .instruction-box {
       width: 100%; background: #27272a; border: 1px solid #3f3f46; border-radius: 8px;
@@ -168,18 +154,26 @@
 
   </style>
 </head>
-<body>
+<body class="lang-vn">
 
   <div class="app-card">
     <div class="title-bar">
-      <span class="title-text">CapCut Tool v7.1</span>
+      <span class="title-text">CapCut Tool v8.0</span>
       <div class="control-buttons">
-        <button class="icon-btn" id="btn-settings" title="Cài đặt Phím tắt">
+        <!-- Nút chuyển ngôn ngữ -->
+        <button class="icon-btn" id="btn-lang" title="Thay đổi Ngôn ngữ / Change Language" onclick="toggleLang()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </button>
+        <!-- Nút mở cài đặt -->
+        <button class="icon-btn" id="btn-settings" title="Cài đặt Phím tắt / Shortcut Settings">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
         </button>
-        <button class="win-btn minimize" onclick="minimizeApp()" title="Thu nhỏ"></button>
-        <!-- THAY ĐỔI Ở ĐÂY: onclick="hideApp()" thay vì quitApp() -->
-        <button class="win-btn close" onclick="hideApp()" title="Ẩn xuống khay hệ thống (Chạy ngầm)"></button>
+        <button class="win-btn minimize" onclick="minimizeApp()"></button>
+        <button class="win-btn close" onclick="hideApp()"></button>
       </div>
     </div>
 
@@ -187,45 +181,49 @@
       <div class="action-group">
         <div class="instruction-box" style="padding: 10px; background: #1f1f22; border-color: #8b5cf6;">
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #3f3f46; padding-bottom: 6px; margin-bottom: 6px;">
-            <h3 style="color:#d4d4d8; font-size: 10px; margin: 0;">🚀 MACRO PHÍM TẮT NGẦM</h3>
+            <h3 style="color:#d4d4d8; font-size: 10px; margin: 0;">
+              <span class="vn">🚀 MACRO PHÍM TẮT NGẦM</span>
+              <span class="en">🚀 BACKGROUND MACRO HOTKEYS</span>
+            </h3>
           </div>
-          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-ui" class="key-badge">F2</span>]: Ẩn / Hiện bảng điều khiển này.</p>
-          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-undo" class="key-badge">F3</span>]: Hoàn tác (Undo) trả về như cũ.</p>
-          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-macro" class="key-badge">F4</span>]: Tự động Bôi đen & Gom Clip.</p>
-          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-srt" class="key-badge">F5</span>]: Trích xuất & Lưu phụ đề SRT.</p>
-          <p style="margin: 0; line-height: 1.4;">• [<span id="lbl-cut" class="key-badge">F6</span>]: Mở & Lưu Video MP4.</p>
+          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-ui" class="key-badge">F2</span>]: 
+            <span class="vn">Ẩn / Hiện bảng điều khiển này.</span><span class="en">Show / Hide this control panel.</span>
+          </p>
+          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-undo" class="key-badge">F3</span>]: 
+            <span class="vn">Hoàn tác (Undo) trả về như cũ.</span><span class="en">Undo changes (Revert).</span>
+          </p>
+          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-macro" class="key-badge">F4</span>]: 
+            <span class="vn">Tự động Bôi đen & Gom Clip.</span><span class="en">Auto Select All & Compound Clip.</span>
+          </p>
+          <p style="margin: 0 0 4px 0; line-height: 1.4;">• [<span id="lbl-srt" class="key-badge">F5</span>]: 
+            <span class="vn">Trích xuất & Lưu phụ đề SRT.</span><span class="en">Extract & Save SRT Subtitles.</span>
+          </p>
+          <p style="margin: 0; line-height: 1.4; color: #10b981; font-weight: bold;">• [<span id="lbl-cut" class="key-badge" style="color: #fff; background: #10b981; border-radius: 4px;">F6</span>]: 
+            <span class="vn">Xuất Video.</span><span class="en">Export Video.</span>
+          </p>
         </div>
 
         <div class="instruction-box" style="padding: 10px;">
-          <h3 style="color:#d4d4d8; font-size: 10px; margin: 0 0 6px 0; border-bottom: 1px solid #3f3f46; padding-bottom: 6px;">SAU KHI BẤM GOM CLIP:</h3>
-          <p style="margin: 0; line-height: 1.4;">Bật <b>Motion Blur</b>, chỉnh Blur về <b>0%</b> và đợi nó chạy Processing 100% xong. Rồi bấm Phím tắt hoặc nút dưới:</p>
+          <h3 style="color:#d4d4d8; font-size: 10px; margin: 0 0 6px 0; border-bottom: 1px solid #3f3f46; padding-bottom: 6px;">
+            <span class="vn">SAU KHI BẤM GOM CLIP:</span>
+            <span class="en">AFTER COMPOUNDING:</span>
+          </h3>
+          <p style="margin: 0; line-height: 1.4;">
+            <span class="vn">Bật <b>Motion Blur</b>, chỉnh Blur về <b>0%</b> và đợi nó chạy Processing 100% xong. Rồi bấm Phím tắt.</span>
+            <span class="en">Enable <b>Motion Blur</b>, set Blur to <b>0%</b> and wait for Processing 100%. Then press Hotkeys.</span>
+          </p>
         </div>
 
-        <button class="btn btn-folder" onclick="cutCacheFolder()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Mở & Lưu Video
-        </button>
+        <!-- Đã xóa hoàn toàn 2 nút .btn-folder (XUẤT VIDEO) và .btn-srt (XUẤT PHỤ ĐỀ) -->
 
-        <button class="btn btn-srt" onclick="exportSrt()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-          </svg>
-          Trích xuất & Lưu phụ đề SRT
-        </button>
       </div>
     </div>
 
     <div class="settings-panel" id="settings-view">
       <div class="settings-header">
-        <span class="settings-title">CÀI ĐẶT PHÍM TẮT</span>
+        <span class="settings-title">
+          <span class="vn">CÀI ĐẶT PHÍM TẮT</span><span class="en">HOTKEY SETTINGS</span>
+        </span>
         <button class="icon-btn" id="btn-close-settings">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
@@ -233,33 +231,37 @@
 
       <div style="flex: 1; overflow-y: auto; padding-right: 4px;">
         <div class="setting-group">
-          <label class="setting-label">Phím Ẩn / Hiện Giao Diện</label>
-          <input type="text" class="shortcut-input" id="inp-ui" placeholder="Nhấn phím...">
+          <label class="setting-label"><span class="vn">Phím Ẩn / Hiện Giao Diện</span><span class="en">Toggle UI Panel Key</span></label>
+          <input type="text" class="shortcut-input" id="inp-ui" placeholder="Nhấn phím / Press key...">
         </div>
         <div class="setting-group">
-          <label class="setting-label">Phím Hoàn Tác (Undo)</label>
-          <input type="text" class="shortcut-input" id="inp-undo" placeholder="Nhấn phím...">
+          <label class="setting-label"><span class="vn">Phím Hoàn Tác (Undo)</span><span class="en">Undo Action Key</span></label>
+          <input type="text" class="shortcut-input" id="inp-undo" placeholder="Nhấn phím / Press key...">
         </div>
         <div class="setting-group">
-          <label class="setting-label">Phím Tự động Gom Clip</label>
-          <input type="text" class="shortcut-input" id="inp-macro" placeholder="Nhấn phím...">
+          <label class="setting-label"><span class="vn">Phím Tự động Gom Clip</span><span class="en">Auto Compound Clip Key</span></label>
+          <input type="text" class="shortcut-input" id="inp-macro" placeholder="Nhấn phím / Press key...">
         </div>
         <div class="setting-group">
-          <label class="setting-label">Phím Xuất Phụ Đề SRT</label>
-          <input type="text" class="shortcut-input" id="inp-srt" placeholder="Nhấn phím...">
+          <label class="setting-label"><span class="vn">Phím Xuất Phụ Đề SRT</span><span class="en">Export SRT Key</span></label>
+          <input type="text" class="shortcut-input" id="inp-srt" placeholder="Nhấn phím / Press key...">
         </div>
         <div class="setting-group">
-          <label class="setting-label">Phím Cắt Video MP4</label>
-          <input type="text" class="shortcut-input" id="inp-cut" placeholder="Nhấn phím...">
+          <label class="setting-label"><span class="vn">Phím Xuất Video</span><span class="en">Export Video Key</span></label>
+          <input type="text" class="shortcut-input" id="inp-cut" placeholder="Nhấn phím / Press key...">
         </div>
       </div>
 
-      <button class="save-btn" id="btn-save-settings">LƯU CÀI ĐẶT</button>
+      <button class="save-btn" id="btn-save-settings">
+        <span class="vn">LƯU CÀI ĐẶT</span><span class="en">SAVE SETTINGS</span>
+      </button>
     </div>
 
     <div class="status-bar">
       <span class="status-dot" id="status-indicator"></span>
-      <span id="status-label">Khởi động...</span>
+      <span id="status-label">
+        <span class="vn">Khởi động...</span><span class="en">Starting...</span>
+      </span>
     </div>
   </div>
 
@@ -268,26 +270,29 @@
     if (typeof require !== 'undefined') {
       ipcRenderer = require('electron').ipcRenderer;
     } else {
-      console.warn("Đang chạy trên môi trường Web/Preview. Đã giả lập (mock) ipcRenderer.");
-      ipcRenderer = {
-        send: (channel, data) => console.log('Giả lập gửi lệnh:', channel, data),
-        on: (channel, cb) => console.log('Giả lập nhận lệnh:', channel)
-      };
+      console.warn("Môi trường Web. Đã giả lập ipcRenderer.");
+      ipcRenderer = { send: () => {}, on: () => {} };
+    }
+
+    // Cơ chế chuyển đổi ngôn ngữ
+    let currentLang = 'vn';
+    function toggleLang() {
+      currentLang = currentLang === 'vn' ? 'en' : 'vn';
+      document.body.className = 'lang-' + currentLang;
     }
 
     const statusLabel = document.getElementById('status-label');
     const statusIndicator = document.getElementById('status-indicator');
 
-    // DOM Elements
     const settingsView = document.getElementById('settings-view');
     const btnSettings = document.getElementById('btn-settings');
     const btnCloseSettings = document.getElementById('btn-close-settings');
     const btnSaveSettings = document.getElementById('btn-save-settings');
 
     let currentConfig = {};
-
     let isDragging = false;
     let startX, startY;
+
     window.addEventListener('mousedown', (e) => {
       if (e.target.closest('.win-btn') || e.target.closest('.btn') || e.target.closest('.icon-btn') || e.target.closest('.shortcut-input')) return;
       isDragging = true;
@@ -300,10 +305,8 @@
     });
     window.addEventListener('mouseup', () => { isDragging = false; });
 
-    // HÀM MỚI: Ẩn xuống System Tray thay vì Tắt hẳn
     function hideApp() { ipcRenderer.send('app-hide'); }
     function minimizeApp() { ipcRenderer.send('app-minimize'); }
-    
     function cutCacheFolder() { ipcRenderer.send('cut-cache-video'); }
     function exportSrt() { ipcRenderer.send('get-latest-srt'); }
 
@@ -336,7 +339,6 @@
         
         let k = e.key;
         if (['Control', 'Alt', 'Shift', 'Meta', 'Tab', 'Escape'].includes(k)) return;
-        
         if (/^[a-z]$/.test(k)) k = k.toUpperCase();
         if (k.startsWith('Arrow')) k = k.replace('Arrow', '');
         if (k === ' ') k = 'Space';
@@ -361,22 +363,33 @@
       document.getElementById('lbl-macro').innerText = newConfig.macro;
       document.getElementById('lbl-srt').innerText = newConfig.srt;
       document.getElementById('lbl-cut').innerText = newConfig.cut;
-
       settingsView.classList.remove('open');
+    };
+
+    // Bộ phiên dịch thông báo từ hệ thống
+    const translateMsg = {
+      'Đã Undo (Hoàn tác).': 'Undo successful.',
+      'Đã bôi đen và gộp Clip xong!': 'Clips selected & compounded!',
+      '❌ Không có phụ đề nào để xuất!': '❌ No subtitles to export!',
+      '✅ Đã lưu file SRT thành công!': '✅ SRT file saved successfully!',
+      '❌ Thư mục Cache chưa tồn tại. (Quên bật Motion Blur?)': '❌ Cache not found. (Forgot Motion Blur?)',
+      '❌ Không có video nào được Render ngầm!': '❌ No background rendered video found!',
+      '✅ Đã CUT video và dọn rác Cache thành công!': '✅ Video Exported & Cache cleaned successfully!'
     };
 
     ipcRenderer.on('capcut-status', (event, isRunning) => {
       if (isRunning) {
         statusIndicator.className = 'status-dot active';
-        statusLabel.innerText = 'CapCut đang mở! Đã bật phím ngầm.';
+        statusLabel.innerHTML = '<span class="vn">CapCut đang mở! Đã kích hoạt phím ngầm.</span><span class="en">CapCut is open! Hotkeys active.</span>';
       } else {
         statusIndicator.className = 'status-dot';
-        statusLabel.innerText = 'Chờ CapCut... Phím ngầm đã tắt.';
+        statusLabel.innerHTML = '<span class="vn">Chờ CapCut... Phím ngầm đã tắt.</span><span class="en">Waiting for CapCut... Hotkeys disabled.</span>';
       }
     });
 
     ipcRenderer.on('macro-status', (event, message) => {
-      statusLabel.innerText = message;
+      const enMsg = translateMsg[message] || message;
+      statusLabel.innerHTML = `<span class="vn">${message}</span><span class="en">${enMsg}</span>`;
     });
   </script>
 </body>
